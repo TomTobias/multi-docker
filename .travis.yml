@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker builder -t tomtobias/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run tomtobias/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t tomtobias/multi-client ./client
+  - docker build -t tomtobias/multi-nginx ./nginx
+  - docker build -t tomtobias/multi-server ./server
+  - docker build -t tomtobias/multi-worker ./worker
+  # login to Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push tomtobias/multi-client
+  - docker push tomtobias/multi-nginx
+  - docker push tomtobias/multi-server
+  - docker push tomtobias/multi-worker
